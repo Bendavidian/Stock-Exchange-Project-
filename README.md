@@ -4,9 +4,7 @@ A vanilla JavaScript stock market dashboard. No build tools, no frameworks, no n
 
 ## Demo
 
-<video src="public/Screen Recording 2026-06-18 at 14.09.03.mov" controls width="100%"></video>
-
-> To view the demo locally, open `public/Screen Recording 2026-06-18 at 14.09.03.mov`
+<video src="public/Screen%20Recording%202026-06-18%20at%2014.09.03.mov" controls width="100%" style="max-width:100%;border-radius:12px;"></video>
 
 ---
 
