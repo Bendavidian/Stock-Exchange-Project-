@@ -27,6 +27,13 @@
     <canvas id="ink-reveal-canvas" class="ink-page-bg__canvas"></canvas>
   </div>
 
+  <!-- Animated shader background — same z-index:0, later in DOM = on top.
+       Fades to opacity:0 on mouse activity so the ink-reveal layer shows. -->
+  <canvas id="shader-bg-canvas" class="shader-bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- Falling particles / shooting-star layer — above shader, below all UI. -->
+  <canvas id="particles-canvas" class="particles-canvas" aria-hidden="true"></canvas>
+
   <div id="marquee-container" class="marquee-container">
     <div id="marquee-track" class="marquee-track"></div>
   </div>
@@ -90,5 +97,7 @@
   </main>
 
   <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/shaderBackground.js"></script>
+  <script type="module" src="js/fallingParticles.js"></script>
 </body>
 </html>

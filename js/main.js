@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   searchResult.init();
   searchResult.onCompare((company) => {
     console.log('Compare clicked:', company);
+    compareList.add(company);
   });
 
   const searchForm = new SearchForm('search-input', 'autocomplete-list');

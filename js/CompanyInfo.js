@@ -4,21 +4,21 @@ import { createElement, formatPercent, safeText } from './utils.js';
 
 export default class CompanyInfo {
   /**
-   * @param {string} containerId - ID of the company info root element
+   * @param {HTMLElement|string|null} container - Company info root element or element ID
+   * @param {string|null} symbol - Ticker symbol from the URL
    */
-  constructor(containerId) {
-    this.container = document.getElementById(containerId);
+  constructor(container, symbol) {
+    this.container = typeof container === 'string'
+      ? document.getElementById(container)
+      : container;
     this.priceChart = null;
-    this.symbol = '';
+    this.symbol = symbol ? symbol.trim().toUpperCase() : '';
   }
 
   /**
-   * Load and render the company detail page for a ticker symbol.
-   * @param {string|null} rawSymbol
+   * Load and render the company detail page for this.symbol.
    */
-  async load(rawSymbol) {
-    this.symbol = rawSymbol ? rawSymbol.trim().toUpperCase() : '';
-
+  async load() {
     if (!this.symbol) {
       this.showError(
         'No stock symbol provided. Please go back and search for a company.'

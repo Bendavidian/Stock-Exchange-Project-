@@ -258,6 +258,23 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: 0.04em;
 }
 
+.chip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chip__label span {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-2);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
 .chip__remove {
   display: inline-flex;
   align-items: center;
@@ -274,6 +291,17 @@ a { color: inherit; text-decoration: none; }
 }
 
 .chip__remove:hover { color: var(--red); background: var(--red-dim); }
+
+.compare-helper,
+.compare-message {
+  width: 100%;
+  font-size: 0.78rem;
+  color: var(--text-2);
+}
+
+.compare-message {
+  color: var(--yellow);
+}
 
 /* ─── Buttons ──────────────────────────────────────────────── */
 .btn {
@@ -1033,6 +1061,129 @@ a { color: inherit; text-decoration: none; }
   gap: 24px;
 }
 
+.compare-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.compare-company-card,
+.compare-chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.compare-company-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.compare-company-card__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.compare-company-card__logo-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius);
+  background: #fff;
+  border: 1px solid var(--border-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.compare-company-card__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 7px;
+}
+
+.compare-company-card__logo-wrap--fallback {
+  background: var(--surface-2);
+}
+
+.compare-company-card__symbol {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-1);
+}
+
+.compare-company-card__name {
+  color: var(--text-2);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.compare-company-card__price {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.compare-company-card__change {
+  width: fit-content;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.compare-company-card__change.up { color: var(--green); background: var(--green-dim); }
+.compare-company-card__change.down { color: var(--red); background: var(--red-dim); }
+.compare-company-card__change.flat { color: var(--text-3); background: var(--surface-2); }
+
+.compare-company-card__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-top: 4px;
+}
+
+.compare-company-card__metric {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.84rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.compare-company-card__metric span {
+  color: var(--text-3);
+}
+
+.compare-company-card__metric strong,
+.compare-company-card__metric a {
+  color: var(--text-1);
+  font-weight: 700;
+  text-align: right;
+}
+
+.compare-company-card__metric a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.compare-chart-wrap {
+  position: relative;
+  height: 360px;
+}
+
 .compare-table-wrapper {
   overflow-x: auto;
   background: var(--surface);
@@ -1072,6 +1223,47 @@ a { color: inherit; text-decoration: none; }
 
 .compare-table .up   { color: var(--green); }
 .compare-table .down { color: var(--red);   }
+
+/* ─── Shader Background Canvas ─────────────────────────────── */
+/* Sits directly after .ink-page-bg in the DOM (same z-index:0) so it        */
+/* renders on top of the ink layer by DOM order.  The JS module fades it out  */
+/* on mousemove so the ink-reveal below is unobstructed, then fades it back   */
+/* in once the mouse is idle.  pointer-events:none keeps interaction clear.   */
+.shader-bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  /* Slow fade-in when idle restores: blend from dark canvas to shader glow */
+  transition: opacity 0.9s ease;
+  opacity: 1;
+}
+
+/* Fast fade-out on mouse activity so ink-reveal appears quickly */
+.shader-bg-canvas--hidden {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* ─── Falling Particles Canvas ──────────────────────────────── */
+/* Same z-index:0 as shader but later in DOM = renders above it. */
+/* Always visible (never toggled); subtle enough not to distract.  */
+.particles-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── Float animation (ambient use) ────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
 
 /* ─── Utility Classes ──────────────────────────────────────── */
 .hidden { display: none !important; }
