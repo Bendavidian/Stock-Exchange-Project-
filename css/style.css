@@ -83,7 +83,19 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 0;
   white-space: nowrap;
+  width: max-content;
   will-change: transform;
+  animation: ticker-scroll 32s linear infinite;
+}
+
+.marquee-container:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+.marquee-track--fallback {
+  width: 100%;
+  animation: none;
+  justify-content: center;
 }
 
 .marquee-item {
@@ -101,6 +113,18 @@ a { color: inherit; text-decoration: none; }
 .marquee-item .price  { color: var(--text-1); }
 .marquee-item .change.up   { color: var(--green); }
 .marquee-item .change.down { color: var(--red); }
+.marquee-item .change.flat { color: var(--text-3); }
+
+.marquee-fallback {
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
 
 /* ─── Layout ───────────────────────────────────────────────── */
 .main-container {
@@ -117,29 +141,30 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 40px;
 }
 
-.logo {
+/* ─── Site Logo (image) ────────────────────────────────────── */
+.site-logo-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  line-height: 0;
+  flex-shrink: 0;
   margin-bottom: 20px;
-  padding: 6px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
 }
 
-.logo-icon {
-  font-size: 14px;
-  color: var(--accent);
-  line-height: 1;
+/* Full-size logo — used in page headers */
+.site-logo {
+  height: clamp(52px, 8vw, 72px);
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
-.logo-text {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-2);
-  text-transform: uppercase;
+/* Compact logo — used in breadcrumb nav bars */
+.site-logo--nav {
+  height: 36px;
+}
+
+.site-logo-link:has(.site-logo--nav) {
+  margin-bottom: 0;
 }
 
 .main-title {
@@ -160,6 +185,9 @@ a { color: inherit; text-decoration: none; }
 
 /* ─── Breadcrumb / Back Link ───────────────────────────────── */
 .breadcrumb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 28px;
 }
 
@@ -465,6 +493,33 @@ a { color: inherit; text-decoration: none; }
   gap: 10px;
 }
 
+.stock-card__logo-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius);
+  background: #fff;
+  border: 1px solid var(--border-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.stock-card__logo-wrap--fallback {
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.stock-card__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+}
+
 .stock-card__symbol {
   font-size: 1.1rem;
   font-weight: 800;
@@ -488,6 +543,13 @@ a { color: inherit; text-decoration: none; }
   padding: 2px 8px;
   border-radius: 999px;
   flex-shrink: 0;
+}
+
+.stock-card__quote-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .stock-card__price {

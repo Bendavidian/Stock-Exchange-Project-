@@ -27,8 +27,11 @@ export default class SearchResult {
 
   /**
    * Render an array of search result objects as stock cards.
-   * Expected shape per item (FMP /search):
-   *   { symbol, name, currency, stockExchange, exchangeShortName }
+   * Expected shape per item:
+   *   {
+   *     symbol, name, currency, stockExchange, exchangeShortName,
+   *     price, change, changesPercentage, image
+   *   }
    * @param {Array} results
    */
   show(results) {
@@ -123,7 +126,9 @@ export default class SearchResult {
 
   /**
    * Build a single stock result card.
-   * FMP /search fields: symbol, name, currency, stockExchange, exchangeShortName
+   * Enriched search fields:
+   *   symbol, name, currency, stockExchange, exchangeShortName,
+   *   price, change, changesPercentage, image
    * @param {Object} item
    * @returns {HTMLElement}
    */
@@ -135,28 +140,56 @@ export default class SearchResult {
     // ── Header: symbol left, exchange badge right ──────────
     const header = createElement('div', 'stock-card__header');
 
+    const logoWrap = createElement('div', 'stock-card__logo-wrap');
+    if (item.image) {
+      const logo = document.createElement('img');
+      logo.className = 'stock-card__logo';
+      logo.src = item.image;
+      logo.alt = item.name ? `${item.name} logo` : `${item.symbol || 'Company'} logo`;
+      logo.loading = 'lazy';
+      logo.onerror = () => {
+        logoWrap.classList.add('stock-card__logo-wrap--fallback');
+        logo.remove();
+        logoWrap.textContent = (item.symbol || '?').slice(0, 1).toUpperCase();
+      };
+      logoWrap.appendChild(logo);
+    } else {
+      logoWrap.classList.add('stock-card__logo-wrap--fallback');
+      logoWrap.textContent = (item.symbol || '?').slice(0, 1).toUpperCase();
+    }
+
     const meta = createElement('div', 'stock-card__meta');
-    const symbolEl = createElement('div', 'stock-card__symbol', item.symbol || '—');
-    const nameEl = createElement('div', 'stock-card__name', item.name || '');
+    const symbolEl = createElement('div', 'stock-card__symbol', item.symbol || 'N/A');
+    const nameEl = createElement('div', 'stock-card__name', item.name || 'N/A');
     meta.appendChild(symbolEl);
     meta.appendChild(nameEl);
 
     const exchangeBadge = createElement(
       'span',
       'stock-card__exchange',
-      item.exchangeShortName || item.stockExchange || ''
+      item.exchangeShortName || item.stockExchange || 'N/A'
     );
 
+    header.appendChild(logoWrap);
     header.appendChild(meta);
     header.appendChild(exchangeBadge);
+
+    // ── Quote: latest price + movement ─────────────────────
+    const quoteRow = createElement('div', 'stock-card__quote-row');
+    quoteRow.appendChild(
+      createElement('div', 'stock-card__price', this._formatPrice(item.price))
+    );
+
+    const changeClass = this._getChangeClass(item.changesPercentage);
+    quoteRow.appendChild(
+      createElement('div', `stock-card__change ${changeClass}`, this._formatChangePercent(item.changesPercentage))
+    );
 
     // ── Details: full exchange name + currency ─────────────
     const details = createElement('div', 'stock-card__details');
 
-    if (item.stockExchange) {
-      const exFull = createElement('span', 'stock-card__detail', item.stockExchange);
-      details.appendChild(exFull);
-    }
+    const exFull = createElement('span', 'stock-card__detail', item.stockExchange || 'N/A');
+    details.appendChild(exFull);
 
     if (item.currency) {
       const sep = createElement('span', 'stock-card__detail', '·');
@@ -176,8 +209,21 @@ export default class SearchResult {
 
     footer.appendChild(viewLink);
 
+    if (this._onAddToCompare) {
+      const compareBtn = document.createElement('button');
+      compareBtn.type = 'button';
+      compareBtn.className = 'btn btn--add btn--sm';
+      compareBtn.textContent = 'Compare';
+      compareBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._onAddToCompare(item);
+      });
+      footer.appendChild(compareBtn);
+    }
+
     // Assemble
     card.appendChild(header);
+    card.appendChild(quoteRow);
     if (details.childElementCount > 0) card.appendChild(details);
     card.appendChild(footer);
 
@@ -194,5 +240,23 @@ export default class SearchResult {
     });
 
     return card;
+  }
+
+  _formatPrice(value) {
+    if (value == null || Number.isNaN(Number(value))) return 'N/A';
+    return `$${Number(value).toFixed(2)}`;
+  }
+
+  _formatChangePercent(value) {
+    if (value == null || Number.isNaN(Number(value))) return 'N/A';
+    const sign = Number(value) > 0 ? '+' : '';
+    return `${sign}${Number(value).toFixed(2)}%`;
+  }
+
+  _getChangeClass(value) {
+    if (value == null || Number.isNaN(Number(value))) return 'flat';
+    if (Number(value) > 0) return 'up';
+    if (Number(value) < 0) return 'down';
+    return 'flat';
   }
 }

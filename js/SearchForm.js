@@ -1,6 +1,5 @@
-import { debounce } from './utils.js';
-
 const MIN_QUERY_LENGTH = 2;
+const SEARCH_DEBOUNCE_MS = 400;
 
 export default class SearchForm {
   /**
@@ -15,6 +14,8 @@ export default class SearchForm {
     this._onSearchCallback = null;
     this._onClearCallback = null;
     this._activeIndex = -1;
+    this._debounceTimer = null;
+    this._lastSubmittedQuery = '';
   }
 
   init() {
@@ -93,6 +94,8 @@ export default class SearchForm {
 
   clear() {
     if (this.input) this.input.value = '';
+    this._clearPendingSearch();
+    this._lastSubmittedQuery = '';
     this.hideSuggestions();
     this._toggleClearBtn(false);
     if (this._onClearCallback) this._onClearCallback();
@@ -112,17 +115,15 @@ export default class SearchForm {
   }
 
   _bindEvents() {
-    const debouncedSearch = debounce((query) => {
-      if (this._onSearchCallback) this._onSearchCallback(query);
-    }, 380);
-
     this.input.addEventListener('input', (e) => {
       const query = e.target.value.trim();
       this._toggleClearBtn(query.length > 0);
 
       if (query.length >= MIN_QUERY_LENGTH) {
-        debouncedSearch(query);
+        this._scheduleSearch(query);
       } else {
+        this._clearPendingSearch();
+        this._lastSubmittedQuery = '';
         this.hideSuggestions();
         if (this._onClearCallback) this._onClearCallback();
       }
@@ -166,9 +167,33 @@ export default class SearchForm {
 
   _triggerSearch() {
     const query = this.input ? this.input.value.trim() : '';
-    if (query.length < MIN_QUERY_LENGTH || !this._onSearchCallback) return;
+    this._clearPendingSearch();
     this.hideSuggestions();
+    this._submitSearch(query);
+  }
+
+  _scheduleSearch(query) {
+    this._clearPendingSearch();
+    this._debounceTimer = window.setTimeout(() => {
+      this._debounceTimer = null;
+      this._submitSearch(query);
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  _submitSearch(query) {
+    if (query.length < MIN_QUERY_LENGTH || !this._onSearchCallback) return;
+
+    const normalizedQuery = query.toLowerCase();
+    if (normalizedQuery === this._lastSubmittedQuery) return;
+
+    this._lastSubmittedQuery = normalizedQuery;
     this._onSearchCallback(query);
+  }
+
+  _clearPendingSearch() {
+    if (!this._debounceTimer) return;
+    window.clearTimeout(this._debounceTimer);
+    this._debounceTimer = null;
   }
 
   _handleKeyNav(e) {

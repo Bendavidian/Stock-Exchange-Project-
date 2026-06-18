@@ -48,7 +48,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     companyInfo.render(profile, quote);
-    const historicalPrices = await getHistoricalPrice(symbol);
+
+    let historicalPrices = [];
+    try {
+      historicalPrices = await getHistoricalPrice(symbol);
+    } catch (chartErr) {
+      historicalPrices = [];
+    }
     companyInfo.addChart(historicalPrices);
   } catch (err) {
     companyInfo.showError(

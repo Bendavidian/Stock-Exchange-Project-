@@ -1,3 +1,7 @@
+import { getBatchQuotes } from './api.js';
+
+const DEFAULT_SYMBOLS = ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'META', 'GOOGL'];
+
 export default class Marquee {
   /**
    * @param {string} containerId - ID of the outer marquee wrapper element
@@ -6,35 +10,40 @@ export default class Marquee {
   constructor(containerId, trackId) {
     this.container = document.getElementById(containerId);
     this.track = document.getElementById(trackId);
-    this.animationId = null;
-    this.position = 0;
-    this.speed = 0.4;
   }
 
-  init() {
+  async init() {
     if (!this.container || !this.track) return;
-    this._loadDefaultTickers();
+
+    try {
+      const quotes = await getBatchQuotes(DEFAULT_SYMBOLS);
+      const quotesBySymbol = new Map(quotes.map((quote) => [quote.symbol, quote]));
+      const tickers = DEFAULT_SYMBOLS.map((symbol) => (
+        this._normalizeTicker(symbol, quotesBySymbol.get(symbol))
+      ));
+      this.render(tickers);
+    } catch (err) {
+      this.showFallback();
+    }
   }
 
   /**
    * Render ticker items from an array of data objects.
-   * @param {Array<{symbol: string, price: string, change: string, isUp: boolean}>} tickers
+   * @param {Array<{symbol: string, price: string, change: string, changeClass: string}>} tickers
    */
   render(tickers) {
     if (!this.track) return;
-    this.stop();
-    this.track.innerHTML = '';
+    this._clearTrack();
+    this.track.classList.remove('marquee-track--fallback');
 
     const doubled = [...tickers, ...tickers];
     doubled.forEach(ticker => {
       this.track.appendChild(this._createItem(ticker));
     });
-
-    this.startAnimation();
   }
 
   /**
-   * @param {{symbol: string, price: string, change: string, isUp: boolean}} ticker
+   * @param {{symbol: string, price: string, change: string, changeClass: string}} ticker
    * @returns {HTMLElement}
    */
   _createItem(ticker) {
@@ -50,7 +59,7 @@ export default class Marquee {
     price.textContent = ticker.price;
 
     const change = document.createElement('span');
-    change.className = `change ${ticker.isUp ? 'up' : 'down'}`;
+    change.className = `change ${ticker.changeClass}`;
     change.textContent = ticker.change;
 
     item.appendChild(symbol);
@@ -59,39 +68,47 @@ export default class Marquee {
     return item;
   }
 
-  startAnimation() {
-    const step = () => {
-      if (!this.track) return;
-      this.position -= this.speed;
-      const halfWidth = this.track.scrollWidth / 2;
-      if (Math.abs(this.position) >= halfWidth) {
-        this.position = 0;
-      }
-      this.track.style.transform = `translateX(${this.position}px)`;
-      this.animationId = requestAnimationFrame(step);
+  showFallback() {
+    if (!this.track) return;
+    this._clearTrack();
+    this.track.classList.add('marquee-track--fallback');
+
+    const message = document.createElement('span');
+    message.className = 'marquee-fallback';
+    message.textContent = 'Market ticker is temporarily unavailable. Please try again shortly.';
+    this.track.appendChild(message);
+  }
+
+  _normalizeTicker(symbol, quote) {
+    return {
+      symbol,
+      price: this._formatPrice(quote?.price),
+      change: this._formatChangePercent(quote?.changesPercentage),
+      changeClass: this._getChangeClass(quote?.changesPercentage),
     };
-    this.animationId = requestAnimationFrame(step);
   }
 
-  stop() {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
+  _formatPrice(value) {
+    if (value == null || Number.isNaN(Number(value))) return '$N/A';
+    return `$${Number(value).toFixed(2)}`;
+  }
+
+  _formatChangePercent(value) {
+    if (value == null || Number.isNaN(Number(value))) return 'N/A';
+    const sign = Number(value) > 0 ? '+' : '';
+    return `${sign}${Number(value).toFixed(2)}%`;
+  }
+
+  _getChangeClass(value) {
+    if (value == null || Number.isNaN(Number(value))) return 'flat';
+    if (Number(value) > 0) return 'up';
+    if (Number(value) < 0) return 'down';
+    return 'flat';
+  }
+
+  _clearTrack() {
+    while (this.track.firstChild) {
+      this.track.removeChild(this.track.firstChild);
     }
-    this.position = 0;
-  }
-
-  _loadDefaultTickers() {
-    const placeholders = [
-      { symbol: 'AAPL',  price: '$—',  change: '—%', isUp: true },
-      { symbol: 'MSFT',  price: '$—',  change: '—%', isUp: true },
-      { symbol: 'GOOGL', price: '$—',  change: '—%', isUp: false },
-      { symbol: 'AMZN',  price: '$—',  change: '—%', isUp: true },
-      { symbol: 'TSLA',  price: '$—',  change: '—%', isUp: false },
-      { symbol: 'NVDA',  price: '$—',  change: '—%', isUp: true },
-      { symbol: 'META',  price: '$—',  change: '—%', isUp: true },
-      { symbol: 'NFLX',  price: '$—',  change: '—%', isUp: false },
-    ];
-    this.render(placeholders);
   }
 }
