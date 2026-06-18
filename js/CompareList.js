@@ -64,7 +64,9 @@ export default class CompareList {
     const hasItems = this._symbols.size > 0;
     this.bar.classList.toggle('hidden', !hasItems);
 
-    this.chipsEl.innerHTML = '';
+    while (this.chipsEl.firstChild) {
+      this.chipsEl.removeChild(this.chipsEl.firstChild);
+    }
     this._symbols.forEach((name, symbol) => {
       this.chipsEl.appendChild(this._createChip(symbol, name));
     });

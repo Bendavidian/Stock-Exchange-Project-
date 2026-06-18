@@ -1,3 +1,5 @@
+import { getCompanyProfile, getHistoricalPrice, getStockQuote } from './api.js';
+import { isApiKeyConfigured } from './config.js';
 import { createElement, formatPercent, safeText } from './utils.js';
 
 export default class CompanyInfo {
@@ -7,14 +9,83 @@ export default class CompanyInfo {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
     this.priceChart = null;
+    this.symbol = '';
   }
 
-  init(symbol) {
-    if (!symbol) {
-      this.showError('No company symbol provided.');
+  /**
+   * Load and render the company detail page for a ticker symbol.
+   * @param {string|null} rawSymbol
+   */
+  async load(rawSymbol) {
+    this.symbol = rawSymbol ? rawSymbol.trim().toUpperCase() : '';
+
+    if (!this.symbol) {
+      this.showError(
+        'No stock symbol provided. Please go back and search for a company.'
+      );
       return;
     }
+
+    if (!isApiKeyConfigured()) {
+      this.showError(
+        'API key not configured. Open js/config.js and replace YOUR_API_KEY_HERE with your Financial Modeling Prep key.'
+      );
+      return;
+    }
+
+    document.title = `${this.symbol} — Stock Exchange`;
     this.showLoading();
+
+    try {
+      const [profileResult, quoteResult] = await Promise.allSettled([
+        getCompanyProfile(this.symbol),
+        getStockQuote(this.symbol),
+      ]);
+
+      if (profileResult.status === 'rejected') {
+        console.error(profileResult.reason);
+      }
+      if (quoteResult.status === 'rejected') {
+        console.error(quoteResult.reason);
+      }
+
+      const profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
+      const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null;
+
+      if (!profile && !quote) {
+        const errors = [profileResult, quoteResult]
+          .filter((result) => result.status === 'rejected')
+          .map((result) => result.reason?.message)
+          .filter(Boolean);
+
+        this.showError(
+          errors.length
+            ? `Failed to load company data: ${errors.join(' | ')}`
+            : `No data found for symbol "${this.symbol}". It may not be listed on NASDAQ.`
+        );
+        return;
+      }
+
+      if (profile?.companyName) {
+        document.title = `${profile.companyName} (${this.symbol}) — Stock Exchange`;
+      }
+
+      this.render(profile, quote);
+
+      let historicalPrices = [];
+      try {
+        historicalPrices = await getHistoricalPrice(this.symbol);
+      } catch (chartErr) {
+        console.error(chartErr);
+        historicalPrices = [];
+      }
+      this.addChart(historicalPrices);
+    } catch (err) {
+      console.error(err);
+      this.showError(
+        `Failed to load company data: ${err?.message || 'Unknown error'}`
+      );
+    }
   }
 
   /**

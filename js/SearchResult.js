@@ -1,4 +1,6 @@
-import { createElement } from './utils.js';
+import { searchCompanies } from './api.js';
+import { isApiKeyConfigured } from './config.js';
+import { createElement, createHighlightedText } from './utils.js';
 
 export default class SearchResult {
   /**
@@ -7,13 +9,16 @@ export default class SearchResult {
    * @param {string} loadingId    - ID of the loading indicator element
    * @param {string} emptyId      - ID of the empty-state element
    */
-  constructor(containerId, gridId, loadingId, emptyId) {
-    this.container = document.getElementById(containerId);
-    this.grid = document.getElementById(gridId);
-    this.loadingEl = document.getElementById(loadingId);
-    this.emptyEl = document.getElementById(emptyId);
-    this.errorEl = null;
-    this._onAddToCompare = null;
+  constructor(containerId, gridId, loadingId, emptyId, searchInputId = 'search-input') {
+    this.container   = document.getElementById(containerId);
+    this.grid        = document.getElementById(gridId);
+    this.loadingEl   = document.getElementById(loadingId);
+    this.emptyEl     = document.getElementById(emptyId);
+    // Used to read the live query when show() is called without an explicit query arg
+    this.searchInput = document.getElementById(searchInputId);
+    this.errorEl     = null;
+    this._onCompare       = null;
+    this._activeQuery     = '';
   }
 
   init() {
@@ -21,8 +26,45 @@ export default class SearchResult {
     this._injectErrorEl();
   }
 
+  onCompare(callback) {
+    this._onCompare = callback;
+  }
+
   onAddToCompare(callback) {
-    this._onAddToCompare = callback;
+    this.onCompare(callback);
+  }
+
+  /**
+   * Fetch and render search results for a query.
+   * @param {string} query
+   * @param {Function} [onSuggestions] callback receiving result subset for autocomplete
+   */
+  async search(query, onSuggestions) {
+    if (!isApiKeyConfigured()) {
+      this.showError(
+        'API key not configured. Open js/config.js and replace YOUR_API_KEY_HERE with your key.'
+      );
+      return;
+    }
+
+    this.showLoading();
+
+    try {
+      const results = await searchCompanies(query);
+      this.show(results, query);
+      if (onSuggestions) onSuggestions(results.slice(0, 8));
+    } catch (err) {
+      this.showError(
+        err.message || 'Failed to fetch results. Check your API key or network connection.'
+      );
+      if (onSuggestions) onSuggestions([]);
+    }
+  }
+
+  showApiKeyError() {
+    this.showError(
+      'API key not configured. Open js/config.js and replace YOUR_API_KEY_HERE with your Financial Modeling Prep key.'
+    );
   }
 
   /**
@@ -33,9 +75,14 @@ export default class SearchResult {
    *     price, change, changesPercentage, image
    *   }
    * @param {Array} results
+   * @param {string} [query]
    */
-  show(results) {
+  show(results, query = null) {
     if (!this.grid || !this.container) return;
+    // If no query was passed (main.js calls show(results) without it), fall back
+    // to the current value of the search input so highlighting still works.
+    const resolved = (query != null ? String(query) : (this.searchInput ? this.searchInput.value : ''));
+    this._activeQuery = resolved.trim();
     this.hideLoading();
     this.hideError();
     this.container.classList.remove('hidden');
@@ -51,7 +98,7 @@ export default class SearchResult {
 
     if (this.emptyEl) this.emptyEl.classList.add('hidden');
     results.forEach(item => {
-      this.grid.appendChild(this._renderCard(item));
+      this.grid.appendChild(this._renderCard(item, this._activeQuery));
     });
   }
 
@@ -130,9 +177,10 @@ export default class SearchResult {
    *   symbol, name, currency, stockExchange, exchangeShortName,
    *   price, change, changesPercentage, image
    * @param {Object} item
+   * @param {string} query
    * @returns {HTMLElement}
    */
-  _renderCard(item) {
+  _renderCard(item, query) {
     const card = createElement('div', 'stock-card');
     card.setAttribute('role', 'article');
     card.setAttribute('tabindex', '0');
@@ -159,8 +207,11 @@ export default class SearchResult {
     }
 
     const meta = createElement('div', 'stock-card__meta');
-    const symbolEl = createElement('div', 'stock-card__symbol', item.symbol || 'N/A');
-    const nameEl = createElement('div', 'stock-card__name', item.name || 'N/A');
+    const symbolEl = createElement('div', 'stock-card__symbol');
+    this._appendHighlightedText(symbolEl, item.symbol || 'N/A', query);
+
+    const nameEl = createElement('div', 'stock-card__name');
+    this._appendHighlightedText(nameEl, item.name || 'N/A', query);
     meta.appendChild(symbolEl);
     meta.appendChild(nameEl);
 
@@ -209,17 +260,16 @@ export default class SearchResult {
 
     footer.appendChild(viewLink);
 
-    if (this._onAddToCompare) {
-      const compareBtn = document.createElement('button');
-      compareBtn.type = 'button';
-      compareBtn.className = 'btn btn--add btn--sm';
-      compareBtn.textContent = 'Compare';
-      compareBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._onAddToCompare(item);
-      });
-      footer.appendChild(compareBtn);
-    }
+    const compareBtn = document.createElement('button');
+    compareBtn.type = 'button';
+    compareBtn.className = 'btn btn--add btn--sm';
+    compareBtn.textContent = 'Compare';
+    compareBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this._onCompare) this._onCompare(item);
+    });
+    footer.appendChild(compareBtn);
 
     // Assemble
     card.appendChild(header);
@@ -258,5 +308,9 @@ export default class SearchResult {
     if (Number(value) > 0) return 'up';
     if (Number(value) < 0) return 'down';
     return 'flat';
+  }
+
+  _appendHighlightedText(parent, text, query) {
+    parent.appendChild(createHighlightedText(text, query));
   }
 }

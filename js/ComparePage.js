@@ -1,4 +1,5 @@
-import { createElement, formatPercent, safeText } from './utils.js';
+import { getBatchQuotes } from './api.js';
+import { createElement, formatPercent } from './utils.js';
 
 export default class ComparePage {
   /**
@@ -15,14 +16,30 @@ export default class ComparePage {
   init(symbolsParam) {
     if (!symbolsParam) {
       this.showError('No symbols provided for comparison.');
-      return;
+      return false;
     }
     this._symbols = symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
     if (this._symbols.length < 2) {
       this.showError('Please select at least 2 stocks to compare.');
-      return;
+      return false;
     }
     this.showLoading();
+    return true;
+  }
+
+  /**
+   * Load and render comparison data for the requested URL symbol param.
+   * @param {string|null} symbolsParam
+   */
+  async load(symbolsParam) {
+    if (!this.init(symbolsParam)) return;
+
+    try {
+      const data = await getBatchQuotes(this._symbols);
+      this.render(data);
+    } catch (err) {
+      this.showError('Failed to load comparison data. Please try again later.');
+    }
   }
 
   /**
@@ -31,7 +48,7 @@ export default class ComparePage {
    */
   render(data) {
     if (!this.container) return;
-    this.container.innerHTML = '';
+    this._clear();
 
     if (!data || !data.length) {
       this.showError('No data available for the selected symbols.');
@@ -46,21 +63,29 @@ export default class ComparePage {
 
   showLoading() {
     if (!this.container) return;
-    this.container.innerHTML = `
-      <div class="loading-indicator">
-        <div class="spinner"></div>
-        <span>Loading comparison data&hellip;</span>
-      </div>`;
+    this._clear();
+
+    const wrapper = createElement('div', 'loading-indicator');
+    wrapper.appendChild(createElement('div', 'spinner'));
+    wrapper.appendChild(createElement('span', '', 'Loading comparison data…'));
+    this.container.appendChild(wrapper);
   }
 
   showError(message) {
     if (!this.container) return;
-    this.container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">&#9888;</div>
-        <p>Cannot compare</p>
-        <span>${safeText(message)}</span>
-      </div>`;
+    this._clear();
+
+    const wrapper = createElement('div', 'empty-state');
+    wrapper.appendChild(createElement('div', 'empty-icon', '⚠'));
+    wrapper.appendChild(createElement('p', '', 'Cannot compare'));
+    wrapper.appendChild(createElement('span', '', message));
+    this.container.appendChild(wrapper);
+  }
+
+  _clear() {
+    while (this.container.firstChild) {
+      this.container.removeChild(this.container.firstChild);
+    }
   }
 
   _buildTable(data) {

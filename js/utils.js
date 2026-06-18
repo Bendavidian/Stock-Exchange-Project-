@@ -59,3 +59,54 @@ export function safeText(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+/**
+ * Build a DocumentFragment that wraps every case-insensitive occurrence of
+ * `query` inside `text` with a <span class="text-highlight"> element.
+ *
+ * Safety: no innerHTML is used. All text is set via createTextNode /
+ * span.textContent, so even if `text` or `query` contain HTML/script
+ * characters they are treated as plain text only.
+ *
+ * Uses indexOf (not RegExp) so special characters in the query (. * + ? etc.)
+ * are matched literally and can never cause a syntax error.
+ *
+ * @param {string} text  - the full string to display
+ * @param {string} query - the search term to highlight (may be empty)
+ * @returns {DocumentFragment}
+ */
+export function createHighlightedText(text, query) {
+  const fragment = document.createDocumentFragment();
+  const value  = String(text  ?? '');
+  const needle = String(query ?? '').trim();
+
+  if (!needle) {
+    fragment.appendChild(document.createTextNode(value));
+    return fragment;
+  }
+
+  const lowerValue  = value.toLowerCase();
+  const lowerNeedle = needle.toLowerCase();
+  let cursor     = 0;
+  let matchIndex = lowerValue.indexOf(lowerNeedle, cursor);
+
+  while (matchIndex !== -1) {
+    if (matchIndex > cursor) {
+      fragment.appendChild(document.createTextNode(value.slice(cursor, matchIndex)));
+    }
+
+    const mark = document.createElement('span');
+    mark.className = 'text-highlight';
+    mark.textContent = value.slice(matchIndex, matchIndex + needle.length);
+    fragment.appendChild(mark);
+
+    cursor     = matchIndex + needle.length;
+    matchIndex = lowerValue.indexOf(lowerNeedle, cursor);
+  }
+
+  if (cursor < value.length) {
+    fragment.appendChild(document.createTextNode(value.slice(cursor)));
+  }
+
+  return fragment;
+}
