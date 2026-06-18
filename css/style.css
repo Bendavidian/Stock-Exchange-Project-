@@ -1114,6 +1114,11 @@ a { color: inherit; text-decoration: none; }
   background: var(--surface-2);
 }
 
+.compare-company-card__identity {
+  flex: 1;
+  min-width: 0;
+}
+
 .compare-company-card__symbol {
   font-size: 1.25rem;
   font-weight: 800;
@@ -1223,6 +1228,20 @@ a { color: inherit; text-decoration: none; }
 
 .compare-table .up   { color: var(--green); }
 .compare-table .down { color: var(--red);   }
+
+.company-chart-empty {
+  color: var(--text-3);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.compare-error-link {
+  margin-top: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
 /* ─── Shader Background Canvas ─────────────────────────────── */
 /* Sits directly after .ink-page-bg in the DOM (same z-index:0) so it        */

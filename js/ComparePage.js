@@ -94,9 +94,16 @@ export default class ComparePage {
     this._clear();
 
     const wrapper = createElement('div', 'empty-state');
-    wrapper.appendChild(createElement('div', 'empty-icon', '!'));
+    wrapper.appendChild(createElement('div', 'empty-icon', '⚠'));
     wrapper.appendChild(createElement('p', '', 'Cannot compare'));
     wrapper.appendChild(createElement('span', '', message));
+
+    const link = document.createElement('a');
+    link.href = 'index.html';
+    link.className = 'btn btn--primary compare-error-link';
+    link.textContent = 'Back to Search';
+    wrapper.appendChild(link);
+
     this.container.appendChild(wrapper);
   }
 
