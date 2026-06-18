@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Exchange — Nasdaq Search</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="ink-page-bg" aria-hidden="true">
+    <img
+      src="public/1.png"
+      alt=""
+      class="ink-page-bg__image"
+    />
+    <canvas id="ink-reveal-canvas" class="ink-page-bg__canvas"></canvas>
+  </div>
+
+  <div id="marquee-container" class="marquee-container">
+    <div id="marquee-track" class="marquee-track"></div>
+  </div>
+
+  <main class="main-container">
+    <header class="page-header">
+      <div class="logo">
+        <span class="logo-icon">&#9650;</span>
+        <span class="logo-text">StockEx</span>
+      </div>
+      <h1 class="main-title">Search Nasdaq Stocks</h1>
+      <p class="subtitle">Real-time quotes, company profiles &amp; side-by-side comparisons</p>
+    </header>
+
+    <div id="compare-bar" class="compare-bar hidden">
+      <div class="compare-bar__inner">
+        <span class="compare-bar__label">Compare:</span>
+        <div id="compare-chips" class="compare-chips"></div>
+        <a id="compare-link" href="compare.html" class="btn btn--primary">View Comparison</a>
+        <button id="compare-clear" class="btn btn--ghost">Clear All</button>
+      </div>
+    </div>
+
+    <section class="search-section">
+      <div id="form-container" class="form-container">
+        <div class="search-box">
+          <span class="search-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input
+            id="search-input"
+            type="text"
+            class="search-input"
+            placeholder="Search by company name or ticker symbol&hellip;"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="search-clear-btn" class="search-clear-btn hidden" aria-label="Clear search">&#10005;</button>
+        </div>
+        <div id="autocomplete-list" class="autocomplete-list hidden"></div>
+      </div>
+    </section>
+
+    <section id="results-container" class="results-container hidden">
+      <div id="loading-indicator" class="loading-indicator hidden">
+        <div class="spinner"></div>
+        <span>Searching&hellip;</span>
+      </div>
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-icon">&#128269;</div>
+        <p>No results found.</p>
+        <span>Try a different company name or ticker symbol.</span>
+      </div>
+      <div id="results-grid" class="results-grid"></div>
+    </section>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

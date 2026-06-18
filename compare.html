@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compare Stocks — Stock Exchange</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="marquee-container" class="marquee-container">
+    <div id="marquee-track" class="marquee-track"></div>
+  </div>
+
+  <main class="main-container">
+    <nav class="breadcrumb">
+      <a href="index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Back to Search
+      </a>
+    </nav>
+
+    <header class="page-header">
+      <div class="logo">
+        <span class="logo-icon">&#9650;</span>
+        <span class="logo-text">StockEx</span>
+      </div>
+      <h1 class="main-title">Compare Stocks</h1>
+      <p class="subtitle">Side-by-side analysis of selected securities</p>
+    </header>
+
+    <div id="compare-page-container" class="compare-page-container">
+      <div id="loading-indicator" class="loading-indicator">
+        <div class="spinner"></div>
+        <span>Loading comparison data&hellip;</span>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/compare.js"></script>
+</body>
+</html>

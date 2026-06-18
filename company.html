@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Profile — Stock Exchange</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="marquee-container" class="marquee-container">
+    <div id="marquee-track" class="marquee-track"></div>
+  </div>
+
+  <main class="main-container">
+    <nav class="breadcrumb">
+      <a href="index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Back to Search
+      </a>
+    </nav>
+
+    <div id="company-container" class="company-container">
+      <div id="loading-indicator" class="loading-indicator">
+        <div class="spinner"></div>
+        <span>Loading company data&hellip;</span>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="js/company.js"></script>
+</body>
+</html>
